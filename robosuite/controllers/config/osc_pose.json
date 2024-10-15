@@ -11,7 +11,7 @@
   "damping_ratio_limits": [0, 10],
   "position_limits": null,
   "orientation_limits": null,
-  "uncouple_pos_ori": true,
+  "uncouple_pos_ori": false,
   "control_delta": true,
   "interpolation": null,
   "ramp_ratio": 0.2

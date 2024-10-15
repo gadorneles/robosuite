@@ -89,9 +89,7 @@ class GymWrapper(Wrapper, gym.Env):
         Extends env reset method to return flattened observation instead of normal OrderedDict and optionally resets seed
 
         Returns:
-            2-tuple:
-                - (np.array) flattened observations from the environment
-                - (dict) an empty dictionary, as part of the standard return format
+            np.array: Flattened environment observation space after reset occurs
         """
         if seed is not None:
             if isinstance(seed, int):
