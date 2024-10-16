@@ -293,12 +293,12 @@ class AffordanceEnv(SingleArmEnv):
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=self.pot,
-                x_range=[-0.03, 0.03],
-                y_range=[-0.03, 0.03],
+                x_range=[-0.1, 0.1],
+                y_range=[-0.1, 0.1],
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
                 reference_pos=self.table_offset,
-                rotation=(np.pi + -np.pi / 3, np.pi + np.pi / 3),
+                rotation = (np.pi + -np.pi / 2, np.pi + np.pi / 2),
             )
 
         # task includes arena, robot, and objects of interest
@@ -425,7 +425,7 @@ class AffordanceEnv(SingleArmEnv):
         cube_height = self.sim.data.body_xpos[self.pot_body_id][2]
         table_height = self.model.mujoco_arena.table_offset[2]
         # cube is higher than the table top above a margin
-        return cube_height > table_height + 0.15
+        return cube_height > table_height + 0.2
     
 
     @property

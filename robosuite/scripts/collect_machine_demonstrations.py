@@ -14,6 +14,7 @@ from glob import glob
 
 import h5py
 import numpy as np
+import random
 
 import robosuite as suite
 import robosuite.macros as macros
@@ -53,7 +54,7 @@ def collect_machine_trajectory(env, arm, env_configuration):
     is_first = True
 
     task_completion_hold_count = -1  # counter to collect 10 timesteps after reaching goal
-    time_limit = 500
+    time_limit = 800
 
     obs, reward, done, _ = env.step(np.zeros(env.action_spec[0].shape))  # You can perform a zero action to start
     gripper_closed = False  # Keep track of whether the gripper is closed
@@ -61,6 +62,11 @@ def collect_machine_trajectory(env, arm, env_configuration):
     count = 0
     limit_count = 0
     counter = False
+    random_bool = random.choice([True, False])
+    random_angle = random.uniform(1, 3)
+    random_1 = random.uniform(-0.05,0.05)
+    random_2 = random.uniform(-0.05,0.05)
+    method = 0 if random.uniform(0,1) >= 0.2 else 1
 
 
     # Loop until we get a reset from the input or the task completes
@@ -73,7 +79,7 @@ def collect_machine_trajectory(env, arm, env_configuration):
         current_rotation_matrix = TU.quat2mat(eef_quat)
 
         # Step 2: Compute the 90º (π/2 radians) rotation matrix around the Z axis
-        rotation_90_z_matrix = rotation_matrix(np.pi / 2, axis='x')
+        rotation_90_z_matrix = rotation_matrix(np.pi / random_angle, axis='x')
 
         # Step 3: Compute the delta rotation matrix
         delta_rotation_matrix = np.dot(rotation_90_z_matrix, np.linalg.inv(current_rotation_matrix))
@@ -90,26 +96,43 @@ def collect_machine_trajectory(env, arm, env_configuration):
         pos_delta = cube_pos - eef_pos
 
         # Check if the gripper is close enough to the cube
+
         if abs(pos_delta[2]) < 0.001 and not gripper_closed:  # If end-effector is close to the cube
             print("End-effector is near the cube. Closing the gripper.")
             gripper_action = 1.0  # Set to negative value to close the gripper
             gripper_closed = True  # Mark gripper as closed
 
         # Create action: 3D delta for position, and keep the orientation part of action unchanged
-        if not counter:
-            action = np.zeros(7)
-            action[:3] = pos_delta
-            action[2] = pos_delta[2] - 0.05
-            action[3:6] = delta_axis  
-            action[6] = gripper_action
+        if method == 0:
+            if limit_count < 200:
+                action = np.zeros(7)
+                action[0] = pos_delta[0] + random_1
+                action[1] = pos_delta[1] + random_2
+                action[2] = 0.0
+                action[3:6] = delta_axis  
+                action[6] = gripper_action
+            elif not counter:
+                action = np.zeros(7)
+                action[:3] = 0.0
+                action[2] = pos_delta[2] - 0.05
+                action[3:6] = delta_axis  
+                action[6] = gripper_action
+
+        #Second method
+        if method == 1:
+            if not counter:
+                action = np.zeros(7)
+                action[:3] = pos_delta
+                action[2] = pos_delta[2] - 0.03
+                action[3:6] = delta_axis  
+                action[6] = gripper_action
         
         # If the gripper is closed, we can stop trying to move the end-effector
         if gripper_closed:
-            if count > 50 and count < 500:
+            if count > 50 and count < 700:
                 counter = True
-                action = np.array([0.0, 0.0, 0.1, 0.0, 0.0, 0.0, gripper_action])
-                print("Gripper is closed. Stopping.")
-            elif count > 500:
+                action = np.array([0.0, 0.0, 0.3, 0.0, 0.0, 0.0, gripper_action])
+            elif count > 700:
                 action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, gripper_action])
             count += 1
 
@@ -202,7 +225,7 @@ def gather_demonstrations_as_hdf5(directory, out_dir, env_info):
         # Add only the successful demonstration to dataset
         if success:
             successful_demos += 1
-            print("Demonstration is successful and has been saved")
+            #print("Demonstration is successful and has been saved")
             # Delete the last state. This is because when the DataCollector wrapper
             # recorded the states and actions, the states were recorded AFTER playing that action,
             # so we end up with an extra state at the end.
@@ -223,7 +246,7 @@ def gather_demonstrations_as_hdf5(directory, out_dir, env_info):
             ep_data_grp.create_dataset("actions", data=np.array(actions))
         else:
             unsuccessful_demos += 1
-            print("Demonstration is unsuccessful and has NOT been saved")
+            #print("Demonstration is unsuccessful and has NOT been saved")
     
     # Summary of the processed demonstrations
     print(f"{successful_demos} successful demonstration(s) saved.")
