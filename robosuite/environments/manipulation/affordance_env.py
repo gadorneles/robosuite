@@ -424,8 +424,9 @@ class AffordanceEnv(SingleArmEnv):
         """
         cube_height = self.sim.data.body_xpos[self.pot_body_id][2]
         table_height = self.model.mujoco_arena.table_offset[2]
+        self.is_lifted = cube_height > table_height + 0.2
         # cube is higher than the table top above a margin
-        return cube_height > table_height + 0.2
+        return self.is_lifted
     
 
     @property

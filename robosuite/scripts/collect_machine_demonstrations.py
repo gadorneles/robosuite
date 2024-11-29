@@ -54,7 +54,7 @@ def collect_machine_trajectory(env, arm, env_configuration):
     is_first = True
 
     task_completion_hold_count = -1  # counter to collect 10 timesteps after reaching goal
-    time_limit = 800
+    time_limit = 500
 
     obs, reward, done, _ = env.step(np.zeros(env.action_spec[0].shape))  # You can perform a zero action to start
     gripper_closed = False  # Keep track of whether the gripper is closed
@@ -89,7 +89,7 @@ def collect_machine_trajectory(env, arm, env_configuration):
         delta_axis = TU.quat2axisangle(delta_quat)
 
         # Get cube position
-        cube_pos = obs['handle0_xpos']  # Get cube position (3D vector)
+        cube_pos = obs['handle1_xpos']  # Get cube position (3D vector)
         #print(cube_pos)        
         # Compute the action to move the end-effector closer to the cube
         # Action is a delta, so we compute the difference between the cube and eef position
