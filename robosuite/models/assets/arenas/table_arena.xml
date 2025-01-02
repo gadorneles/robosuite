@@ -6,6 +6,15 @@
     <!-- ceramic table texture and material-->
     <texture file="../textures/ceramic.png" type="cube" name="tex-ceramic"/>
     <material name="table_ceramic" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-ceramic" />
+    <!-- darkwood table texture and material-->
+    <texture file="../textures/dark-wood.png" type="cube" name="tex-darkwood"/>
+    <material name="table_darkwood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-darkwood" />
+    <!-- lightwood table texture and material-->
+    <texture file="../textures/light-wood.png" type="cube" name="tex-lightwood"/>
+    <material name="table_lightwood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-lightwood" />
+      <!-- lightwood table texture and material-->
+    <texture file="../textures/plywood-4k.png" type="cube" name="tex-plywood"/>
+    <material name="table_plywood" reflectance="0.0" shininess="0.0" specular="0.2" texrepeat="1 1" texture="tex-plywood" />
     <!-- steel legs -->
     <texture file="../textures/steel-brushed.png" type="cube" name="tex-steel-brushed"/>
     <material name="table_legs_metal" reflectance="0.8" shininess="0.8" texrepeat="1 1" texture="tex-steel-brushed" />

@@ -56,11 +56,11 @@ if __name__ == "__main__":
     # list of all demonstrations episodes
     demos = list(f["data"].keys())
 
-    while True:
-        print("Playing back random episode... (press ESC to quit)")
+    for demo in demos:
+        print("Playing back episode: {}".format(demo))
 
         # select an episode randomly
-        ep = random.choice(demos)
+        ep = demo
 
         # read the model xml, using the metadata stored in the attribute for this episode
         model_xml = f["data/{}".format(ep)].attrs["model_file"]

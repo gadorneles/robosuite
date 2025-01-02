@@ -13,7 +13,7 @@ from robosuite.environments.manipulation.two_arm_peg_in_hole import TwoArmPegInH
 from robosuite.environments.manipulation.two_arm_handover import TwoArmHandover
 from robosuite.environments.manipulation.two_arm_transport import TwoArmTransport
 from robosuite.environments.manipulation.affordance_env import AffordanceEnv
-#from mimicgen.envs.robosuite.mug_affordance import MugAffordance
+from mimicgen.envs.robosuite.mug_affordance import MugAffordance
 
 from robosuite.environments import ALL_ENVIRONMENTS
 from robosuite.controllers import ALL_CONTROLLERS, load_controller_config

@@ -54,19 +54,21 @@ def collect_machine_trajectory(env, arm, env_configuration):
     is_first = True
 
     task_completion_hold_count = -1  # counter to collect 10 timesteps after reaching goal
-    time_limit = 500
+    time_limit = 2000
 
     obs, reward, done, _ = env.step(np.zeros(env.action_spec[0].shape))  # You can perform a zero action to start
     gripper_closed = False  # Keep track of whether the gripper is closed
     gripper_action = -1.0  # Open the gripper
+    object_grabbed = False
     count = 0
     limit_count = 0
+    delivery_count = 0
     counter = False
     random_bool = random.choice([True, False])
     random_angle = random.uniform(1, 3)
     random_1 = random.uniform(-0.05,0.05)
     random_2 = random.uniform(-0.05,0.05)
-    method = 0 if random.uniform(0,1) >= 0.2 else 1
+    method = 0 
 
 
     # Loop until we get a reset from the input or the task completes
@@ -89,25 +91,29 @@ def collect_machine_trajectory(env, arm, env_configuration):
         delta_axis = TU.quat2axisangle(delta_quat)
 
         # Get cube position
-        cube_pos = obs['handle1_xpos']  # Get cube position (3D vector)
+        cube_pos = obs['object_pos']  # Get cube position (3D vector)
+        cube_quat = obs['object_quat']  # Get cube orientation (4D quaternion)
+        serving_region_pos = obs['serving_region_pos']
+        serving_region_quat = obs['serving_region_quat']
         #print(cube_pos)        
         # Compute the action to move the end-effector closer to the cube
         # Action is a delta, so we compute the difference between the cube and eef position
         pos_delta = cube_pos - eef_pos
+        pos_delivery = serving_region_pos - eef_pos
 
         # Check if the gripper is close enough to the cube
 
-        if abs(pos_delta[2]) < 0.001 and not gripper_closed:  # If end-effector is close to the cube
+        if abs(pos_delta[2]) < 0.02 and not gripper_closed:  # If end-effector is close to the cube
             print("End-effector is near the cube. Closing the gripper.")
             gripper_action = 1.0  # Set to negative value to close the gripper
             gripper_closed = True  # Mark gripper as closed
 
         # Create action: 3D delta for position, and keep the orientation part of action unchanged
         if method == 0:
-            if limit_count < 200:
+            if limit_count < 300:
                 action = np.zeros(7)
-                action[0] = pos_delta[0] + random_1
-                action[1] = pos_delta[1] + random_2
+                action[0] = pos_delta[0] 
+                action[1] = pos_delta[1]
                 action[2] = 0.0
                 action[3:6] = delta_axis  
                 action[6] = gripper_action
@@ -128,13 +134,33 @@ def collect_machine_trajectory(env, arm, env_configuration):
                 action[6] = gripper_action
         
         # If the gripper is closed, we can stop trying to move the end-effector
-        if gripper_closed:
-            if count > 50 and count < 700:
+        if gripper_closed and not object_grabbed:
+            if count > 30 and count < 100:
                 counter = True
-                action = np.array([0.0, 0.0, 0.3, 0.0, 0.0, 0.0, gripper_action])
-            elif count > 700:
+                action = np.array([0.0, 0.0, 0.1, 0.0, 0.0, 0.0, gripper_action])
+                print("Gripper is closed. Stopping.")
+            elif count > 101:
                 action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, gripper_action])
+                object_grabbed = True
+                print("Object grabbed. Stopping.")
             count += 1
+
+        if object_grabbed:
+            action = np.zeros(7)
+            action[0] = pos_delivery[0]
+            action[1] = pos_delivery[1]
+            action[2] = 0.0
+            action[3:6] = delta_axis
+            action[6] = gripper_action
+
+        if pos_delivery[0] < 0.01 and pos_delivery[1] < 0.01 and delivery_count < 140 and object_grabbed:
+            action = np.zeros(7)
+            action = np.array([0.0, 0.0, -0.15, 0.0, 0.0, 0.0, gripper_action])
+            delivery_count += 1
+        elif delivery_count >= 140:
+            action = [0.0, 0.0, 0.1, 0.0, 0.0, 0.0, -1.0]
+
+        limit_count += 1
 
         # Also break if we reach the time limit
         if limit_count > time_limit:
@@ -192,7 +218,7 @@ def gather_demonstrations_as_hdf5(directory, out_dir, env_info):
             including controller and robot info
     """
 
-    hdf5_path = os.path.join(out_dir, "demo.hdf5")
+    hdf5_path = os.path.join(out_dir, f'{args.environment}.hdf5')
     f = h5py.File(hdf5_path, "w")
 
     # store some metadata in the attributes of one group
@@ -271,7 +297,7 @@ if __name__ == "__main__":
         type=str,
         default=os.path.join(suite.models.assets_root, "demonstrations"),
     )
-    parser.add_argument("--environment", type=str, default="AffordanceEnv")
+    parser.add_argument("--environment", type=str, default="MugAffordance_D0")
     parser.add_argument("--robots", nargs="+", type=str, default="Panda", help="Which robot(s) to use in the env")
     parser.add_argument(
         "--config", type=str, default="single-arm-opposed", help="Specified environment configuration if necessary"
@@ -317,7 +343,7 @@ if __name__ == "__main__":
 
     # make a new timestamped directory
     t1, t2 = str(time.time()).split(".")
-    new_dir = os.path.join(args.directory, "{}_{}".format(t1, t2))
+    new_dir = os.path.join(args.directory, "{}_{}".format(args.environment, t1))
     os.makedirs(new_dir)
 
     # collect demonstrations
