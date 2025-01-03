@@ -38,7 +38,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     demo_path = args.folder
-    hdf5_path = os.path.join(demo_path, "demo.hdf5")
+    hdf5_path = os.path.join(demo_path, "mug_handle_dataset.hdf5")
     f = h5py.File(hdf5_path, "r")
     env_name = f["data"].attrs["env"]
     env_info = json.loads(f["data"].attrs["env_info"])
